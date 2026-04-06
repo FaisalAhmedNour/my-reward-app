@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reward App</title>
+  
+  <!-- Telegram Mini App SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  
+  <!-- AdsGram SDK -->
+  <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--tg-theme-bg-color, #1a1a2e);
+      color: var(--tg-theme-text-color, #ffffff);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      margin-top: 20px;
+    }
+
+    .header h1 {
+      font-size: 24px;
+      margin-bottom: 5px;
+    }
+
+    .header p {
+      font-size: 14px;
+      opacity: 0.7;
+    }
+
+    .balance-card {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border-radius: 20px;
+      padding: 25px;
+      width: 100%;
+      max-width: 340px;
+      text-align: center;
+      margin-bottom: 25px;
+      box-shadow: 0 10px 30px rgba(102,126,234,0.4);
+    }
+
+    .balance-label {
+      font-size: 13px;
+      opacity: 0.8;
+      margin-bottom: 8px;
+    }
+
+    .balance-amount {
+      font-size: 36px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .balance-usd {
+      font-size: 12px;
+      opacity: 0.7;
+    }
+
+    .stats-row {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+      max-width: 340px;
+      margin-bottom: 25px;
+    }
+
+    .stat-card {
+      flex: 1;
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+      padding: 15px;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .stat-number {
+      font-size: 20px;
+      font-weight: bold;
+      color: #667eea;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      opacity: 0.6;
+      margin-top: 4px;
+    }
+
+    .earn-button {
+      background: linear-gradient(135deg, #f093fb, #f5576c);
+      border: none;
+      border-radius: 16px;
+      padding: 18px 40px;
+      font-size: 18px;
+      font-weight: bold;
+      color: white;
+      cursor: pointer;
+      width: 100%;
+      max-width: 340px;
+      margin-bottom: 15px;
+      transition: transform 0.2s, opacity 0.2s;
+      box-shadow: 0 8px 25px rgba(245,87,108,0.4);
+    }
+
+    .earn-button:active {
+      transform: scale(0.97);
+    }
+
+    .earn-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .earn-info {
+      font-size: 12px;
+      opacity: 0.6;
+      margin-bottom: 25px;
+      text-align: center;
+    }
+
+    .withdraw-button {
+      background: transparent;
+      border: 2px solid #667eea;
+      border-radius: 16px;
+      padding: 15px 40px;
+      font-size: 16px;
+      font-weight: bold;
+      color: #667eea;
+      cursor: pointer;
+      width: 100%;
+      max-width: 340px;
+      margin-bottom: 10px;
+      transition: all 0.2s;
+    }
+
+    .withdraw-button:hover {
+      background: #667eea;
+      color: white;
+    }
+
+    .withdraw-button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .min-withdraw-text {
+      font-size: 12px;
+      opacity: 0.5;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .ad-progress {
+      display: none;
+      width: 100%;
+      max-width: 340px;
+      margin-bottom: 20px;
+    }
+
+    .ad-progress-text {
+      text-align: center;
+      font-size: 14px;
+      margin-bottom: 10px;
+      color: #f5576c;
+    }
+
+    .progress-bar {
+      background: rgba(255,255,255,0.1);
+      border-radius: 10px;
+      height: 8px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      background: linear-gradient(90deg, #f093fb, #f5576c);
+      height: 100%;
+      border-radius: 10px;
+      transition: width 0.3s;
+      width: 0%;
+    }
+
+    .notification {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #4CAF50;
+      color: white;
+      padding: 12px 25px;
+      border-radius: 25px;
+      font-size: 14px;
+      font-weight: bold;
+      display: none;
+      z-index: 1000;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    }
+
+    .notification.error {
+      background: #f44336;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="notification" id="notification"></div>
+
+  <div class="header">
+    <h1>💰 Earn TON</h1>
+    <p>Watch ads, earn real crypto</p>
+  </div>
+
+  <div class="balance-card">
+    <div class="balance-label">Your Balance</div>
+    <div class="balance-amount" id="balance">$0.0000</div>
+    <div class="balance-usd">≈ <span id="balanceTon">0.000</span> TON</div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-number" id="adsWatched">0</div>
+      <div class="stat-label">Ads Watched</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="totalEarned">$0</div>
+      <div class="stat-label">Total Earned</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="totalWithdrawn">$0</div>
+      <div class="stat-label">Withdrawn</div>
+    </div>
+  </div>
+
+  <div class="ad-progress" id="adProgress">
+    <div class="ad-progress-text" id="adProgressText">Watching ad 1 of 3...</div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+  </div>
+
+  <button class="earn-button" id="earnBtn" onclick="startEarning()">
+    📺 Watch Ads & Earn
+  </button>
+  <div class="earn-info">Watch 3 ads → Earn $0.0045</div>
+
+  <button class="withdraw-button" id="withdrawBtn" onclick="openWithdraw()">
+    💳 Withdraw TON
+  </button>
+  <div class="min-withdraw-text">Minimum withdrawal: $5.00</div>
+
+  <script>
+    // ========================
+    // CONFIGURATION
+    // ========================
+    const BACKEND_URL = 'https://your-backend.railway.app'; // Change this
+    const ADSGRAM_BLOCK_ID = 'your-block-id'; // Change this
+    const MIN_WITHDRAWAL = 5.00;
+    const EARN_PER_AD = 0.0015;
+    const ADS_PER_CLICK = 3;
+    const TON_PRICE = 5.50; // Approximate TON price in USD
+
+    // ========================
+    // TELEGRAM INIT
+    // ========================
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
+
+    const userId = tg.initDataUnsafe?.user?.id;
+    const firstName = tg.initDataUnsafe?.user?.first_name || 'User';
+
+    let userData = null;
+    let isWatchingAds = false;
+
+    // ========================
+    // LOAD USER DATA
+    // ========================
+    async function loadUserData() {
+      try {
+        const response = await fetch(`${BACKEND_URL}/api/user/${userId}`);
+        if (!response.ok) throw new Error('User not found');
+        
+        userData = await response.json();
+        updateUI();
+      } catch (error) {
+        showNotification('Error loading data', 'error');
+      }
+    }
+
+    function updateUI() {
+      if (!userData) return;
+
+      // Update balance
+      document.getElementById('balance').textContent = 
+        `$${userData.balance.toFixed(4)}`;
+      document.getElementById('balanceTon').textContent = 
+        (userData.balance / TON_PRICE).toFixed(4);
+
+      // Update stats
+      document.getElementById('adsWatched').textContent = userData.adsWatched || 0;
+      document.getElementById('totalEarned').textContent = 
+        `$${(userData.totalEarned || 0).toFixed(2)}`;
+      document.getElementById('totalWithdrawn').textContent = 
+        `$${(userData.totalWithdrawn || 0).toFixed(2)}`;
+
+      // Enable/disable withdraw button
+      const withdrawBtn = document.getElementById('withdrawBtn');
+      if (userData.balance >= MIN_WITHDRAWAL) {
+        withdrawBtn.disabled = false;
+        withdrawBtn.textContent = '💳 Withdraw TON';
+      } else {
+        withdrawBtn.disabled = true;
+        const needed = (MIN_WITHDRAWAL - userData.balance).toFixed(4);
+        withdrawBtn.textContent = `💳 Need $${needed} more`;
+      }
+    }
+
+    // ========================
+    // AD WATCHING SYSTEM
+    // ========================
+    async function startEarning() {
+      if (isWatchingAds) return;
+      isWatchingAds = true;
+
+      const earnBtn = document.getElementById('earnBtn');
+      const adProgress = document.getElementById('adProgress');
+      
+      earnBtn.disabled = true;
+      adProgress.style.display = 'block';
+
+      let adsCompleted = 0;
+
+      // Watch 3 ads one by one
+      for (let i = 1; i <= ADS_PER_CLICK; i++) {
+        document.getElementById('adProgressText').textContent = 
+          `Watching ad ${i} of ${ADS_PER_CLICK}...`;
+        document.getElementById('progressFill').style.width = 
+          `${((i-1) / ADS_PER_CLICK) * 100}%`;
+
+        try {
+          await showAd();
+          adsCompleted++;
+        } catch (error) {
+          console.log('Ad skipped or failed:', error);
+          // Continue even if one ad fails
+        }
+      }
+
+      // Update progress to 100%
+      document.getElementById('progressFill').style.width = '100%';
+
+      if (adsCompleted > 0) {
+        // Send earnings to backend
+        await recordEarnings(adsCompleted);
+      }
+
+      // Reset UI
+      setTimeout(() => {
+        earnBtn.disabled = false;
+        adProgress.style.display = 'none';
+        document.getElementById('progressFill').style.width = '0%';
+        isWatchingAds = false;
+      }, 1500);
+    }
+
+    function showAd() {
+      return new Promise((resolve, reject) => {
+        // Initialize AdsGram
+        const AdController = window.Adsgram.init({ 
+          blockId: ADSGRAM_BLOCK_ID 
+        });
+
+        AdController.show().then((result) => {
+          if (result.done) {
+            resolve(true); // Ad completed
+          } else {
+            reject('Ad not completed');
+          }
+        }).catch((error) => {
+          reject(error);
+        });
+      });
+    }
+
+    async function recordEarnings(adsCount) {
+      try {
+        const response = await fetch(`${BACKEND_URL}/api/earn`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, adsCount })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          const earned = (adsCount * EARN_PER_AD).toFixed(4);
+          showNotification(`+$${earned} earned! 🎉`);
+          
+          // Update local data
+          userData.balance = data.newBalance;
+          userData.adsWatched = (userData.adsWatched || 0) + adsCount;
+          userData.totalEarned = (userData.totalEarned || 0) + parseFloat(earned);
+          updateUI();
+        }
+      } catch (error) {
+        showNotification('Error recording earnings', 'error');
+      }
+    }
+
+    // ========================
+    // WITHDRAWAL SYSTEM
+    // ========================
+    function openWithdraw() {
+      if (!userData || userData.balance < MIN_WITHDRAWAL) {
+        showNotification('Minimum withdrawal is $5.00', 'error');
+        return;
+      }
+
+      const walletAddress = prompt(
+        `Enter your TON wallet address:\n\nYour balance: $${userData.balance.toFixed(4)}`
+      );
+
+      if (!walletAddress) return;
+
+      if (walletAddress.length < 30) {
+        showNotification('Invalid wallet address', 'error');
+        return;
+      }
+
+      processWithdrawal(walletAddress);
+    }
+
+    async function processWithdrawal(walletAddress) {
+      try {
+        const response = await fetch(`${BACKEND_URL}/api/withdraw`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, walletAddress })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showNotification('Withdrawal requested! ✅');
+          userData.totalWithdrawn = (userData.totalWithdrawn || 0) + userData.balance;
+          userData.balance = 0;
+          updateUI();
+        } else {
+          showNotification(data.error, 'error');
+        }
+      } catch (error) {
+        showNotification('Withdrawal error', 'error');
+      }
+    }
+
+    // ========================
+    // NOTIFICATION HELPER
+    // ========================
+    function showNotification(message, type = 'success') {
+      const notification = document.getElementById('notification');
+      notification.textContent = message;
+      notification.className = `notification ${type}`;
+      notification.style.display = 'block';
+
+      setTimeout(() => {
+        notification.style.display = 'none';
+      }, 3000);
+    }
+
+    // ========================
+    // INITIALIZE APP
+    // ========================
+    if (userId) {
+      loadUserData();
+    } else {
+      document.body.innerHTML = '<p style="text-align:center;padding:50px;">Please open this app inside Telegram</p>';
+    }
+  </script>
+
+</body>
+</html>
