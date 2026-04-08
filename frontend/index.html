@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Reward App</title>
-  
+
   <!-- Telegram Mini App SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  
+
   <!-- AdsGram SDK -->
   <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
 
@@ -53,7 +54,7 @@
       max-width: 340px;
       text-align: center;
       margin-bottom: 25px;
-      box-shadow: 0 10px 30px rgba(102,126,234,0.4);
+      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
     }
 
     .balance-label {
@@ -83,11 +84,11 @@
 
     .stat-card {
       flex: 1;
-      background: rgba(255,255,255,0.05);
+      background: rgba(255, 255, 255, 0.05);
       border-radius: 12px;
       padding: 15px;
       text-align: center;
-      border: 1px solid rgba(255,255,255,0.1);
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     .stat-number {
@@ -115,7 +116,7 @@
       max-width: 340px;
       margin-bottom: 15px;
       transition: transform 0.2s, opacity 0.2s;
-      box-shadow: 0 8px 25px rgba(245,87,108,0.4);
+      box-shadow: 0 8px 25px rgba(245, 87, 108, 0.4);
     }
 
     .earn-button:active {
@@ -181,7 +182,7 @@
     }
 
     .progress-bar {
-      background: rgba(255,255,255,0.1);
+      background: rgba(255, 255, 255, 0.1);
       border-radius: 10px;
       height: 8px;
       overflow: hidden;
@@ -208,7 +209,7 @@
       font-weight: bold;
       display: none;
       z-index: 1000;
-      box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
     }
 
     .notification.error {
@@ -216,6 +217,7 @@
     }
   </style>
 </head>
+
 <body>
 
   <div class="notification" id="notification"></div>
@@ -267,12 +269,12 @@
     // ========================
     // CONFIGURATION
     // ========================
-    const BACKEND_URL = 'https://your-backend.railway.app'; // Change this
-    const ADSGRAM_BLOCK_ID = 'your-block-id'; // Change this
+    const BACKEND_URL = 'https://reward-app-backend-production.up.railway.app'; // Change this
+    const ADSGRAM_BLOCK_ID = '27208'; // Change this
     const MIN_WITHDRAWAL = 5.00;
     const EARN_PER_AD = 0.0015;
     const ADS_PER_CLICK = 3;
-    const TON_PRICE = 5.50; // Approximate TON price in USD
+    const TON_PRICE = 1.2; // Approximate TON price in USD
 
     // ========================
     // TELEGRAM INIT
@@ -294,7 +296,7 @@
       try {
         const response = await fetch(`${BACKEND_URL}/api/user/${userId}`);
         if (!response.ok) throw new Error('User not found');
-        
+
         userData = await response.json();
         updateUI();
       } catch (error) {
@@ -306,16 +308,16 @@
       if (!userData) return;
 
       // Update balance
-      document.getElementById('balance').textContent = 
+      document.getElementById('balance').textContent =
         `$${userData.balance.toFixed(4)}`;
-      document.getElementById('balanceTon').textContent = 
+      document.getElementById('balanceTon').textContent =
         (userData.balance / TON_PRICE).toFixed(4);
 
       // Update stats
       document.getElementById('adsWatched').textContent = userData.adsWatched || 0;
-      document.getElementById('totalEarned').textContent = 
+      document.getElementById('totalEarned').textContent =
         `$${(userData.totalEarned || 0).toFixed(2)}`;
-      document.getElementById('totalWithdrawn').textContent = 
+      document.getElementById('totalWithdrawn').textContent =
         `$${(userData.totalWithdrawn || 0).toFixed(2)}`;
 
       // Enable/disable withdraw button
@@ -339,7 +341,7 @@
 
       const earnBtn = document.getElementById('earnBtn');
       const adProgress = document.getElementById('adProgress');
-      
+
       earnBtn.disabled = true;
       adProgress.style.display = 'block';
 
@@ -347,10 +349,10 @@
 
       // Watch 3 ads one by one
       for (let i = 1; i <= ADS_PER_CLICK; i++) {
-        document.getElementById('adProgressText').textContent = 
+        document.getElementById('adProgressText').textContent =
           `Watching ad ${i} of ${ADS_PER_CLICK}...`;
-        document.getElementById('progressFill').style.width = 
-          `${((i-1) / ADS_PER_CLICK) * 100}%`;
+        document.getElementById('progressFill').style.width =
+          `${((i - 1) / ADS_PER_CLICK) * 100}%`;
 
         try {
           await showAd();
@@ -381,8 +383,8 @@
     function showAd() {
       return new Promise((resolve, reject) => {
         // Initialize AdsGram
-        const AdController = window.Adsgram.init({ 
-          blockId: ADSGRAM_BLOCK_ID 
+        const AdController = window.Adsgram.init({
+          blockId: ADSGRAM_BLOCK_ID
         });
 
         AdController.show().then((result) => {
@@ -406,11 +408,11 @@
         });
 
         const data = await response.json();
-        
+
         if (data.success) {
           const earned = (adsCount * EARN_PER_AD).toFixed(4);
           showNotification(`+$${earned} earned! 🎉`);
-          
+
           // Update local data
           userData.balance = data.newBalance;
           userData.adsWatched = (userData.adsWatched || 0) + adsCount;
@@ -493,4 +495,5 @@
   </script>
 
 </body>
+
 </html>
