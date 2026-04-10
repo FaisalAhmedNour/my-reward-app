@@ -269,7 +269,8 @@
     // ========================
     // CONFIGURATION
     // ========================
-    const BACKEND_URL = 'https://reward-app-backend-production.up.railway.app'; // Change this
+    // const BACKEND_URL = 'https://reward-app-backend-production.up.railway.app'; // Change this
+    const BACKEND_URL = 'http://localhost:3000'; // Change this
     const ADSGRAM_BLOCK_ID = '27208'; // Change this
     const MIN_WITHDRAWAL = 5.00;
     const EARN_PER_AD = 0.0015;
@@ -487,11 +488,11 @@
     // ========================
     // INITIALIZE APP
     // ========================
-    if (userId) {
-      loadUserData();
-    } else {
-      document.body.innerHTML = '<p style="text-align:center;padding:50px;">Please open this app inside Telegram</p>';
-    }
+    // if (userId) {
+    loadUserData();
+    // } else {
+    //   document.body.innerHTML = '<p style="text-align:center;padding:50px;">Please open this app inside Telegram</p>';
+    // }
   </script>
 
 </body>
